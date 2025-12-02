@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>银行明细生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 40px;
+        }
+
+        /* 表单样式 */
+        .form-container {
+            flex: 1;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .form-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #007AFF;
+        }
+
+        .generate-btn {
+            width: 100%;
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+
+        .generate-btn:hover {
+            background-color: #0056CC;
+        }
+
+        /* 预览区域样式 */
+        .preview-container {
+            flex: 0 0 414px;
+            position: relative;
+        }
+
+        .phone-mockup {
+            width: 414px;
+            height: 896px;
+            margin: 0 auto;
+            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            background-color: #f5f5f5;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px 8px 20px;
+            background-color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            height: 44px;
+        }
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .signal-bars {
+            display: flex;
+            gap: 2px;
+            align-items: end;
+        }
+
+        .bar {
+            width: 3px;
+            background-color: #333;
+            border-radius: 1px;
+        }
+
+        .bar:nth-child(1) { height: 4px; }
+        .bar:nth-child(2) { height: 6px; }
+        .bar:nth-child(3) { height: 8px; }
+        .bar:nth-child(4) { height: 10px; }
+
+        .battery {
+            background-color: #34C759;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background-color: #fff;
+            border-bottom: 0.5px solid #E5E5E7;
+            height: 56px;
+        }
+
+        .back-btn {
+            font-size: 20px;
+            color: #333;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #000;
+        }
+
+        .actions {
+            display: flex;
+            gap: 20px;
+        }
+
+        .search-btn, .more-btn {
+            font-size: 18px;
+            color: #333;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .content {
+            background-color: #fff;
+            margin-top: 12px;
+            padding: 40px 20px 60px 20px;
+            height: calc(896px - 100px - 12px);
+            overflow-y: auto;
+        }
+
+        .transaction-type {
+            text-align: center;
+            font-size: 16px;
+            color: #8E8E93;
+            margin-bottom: 16px;
+            font-weight: 400;
+        }
+
+        .amount {
+            text-align: center;
+            font-size: 40px;
+            font-weight: 300;
+            color: #000;
+            margin-bottom: 48px;
+            letter-spacing: -1px;
+        }
+
+        .details {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 0;
+            min-height: 22px;
+        }
+
+        .detail-label {
+            font-size: 16px;
+            color: #8E8E93;
+            font-weight: 400;
+            flex-shrink: 0;
+            width: 120px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            color: #000;
+            text-align: right;
+            font-weight: 400;
+            flex: 1;
+            margin-left: 20px;
+        }
+
+        .home-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 134px;
+            height: 5px;
+            background-color: #000;
+            border-radius: 3px;
+        }
+
+        .download-btn {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            background-color: #34C759;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .download-btn:hover {
+            background-color: #28A745;
+        }
+
+        .download-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 表单区域 -->
+        <div class="form-container">
+            <h2 class="form-title">银行明细生成器</h2>
+
+            <div class="form-group">
+                <label class="form-label">交易金额 (元)</label>
+                <input type="number" class="form-input" id="amount" placeholder="请输入金额，如：5760" step="0.01">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">交易时间</label>
+                <input type="datetime-local" class="form-input" id="transactionTime">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">对方账户</label>
+                <input type="text" class="form-input" id="targetAccount" placeholder="如：*勇 6217***2714">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">记账日</label>
+                <input type="date" class="form-input" id="recordDate">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">账户余额 (元)</label>
+                <input type="number" class="form-input" id="balance" placeholder="请输入余额，如：18767.71" step="0.01">
+            </div>
+
+            <button class="generate-btn" onclick="generatePreview()">生成预览</button>
+        </div>
+
+        <!-- 预览区域 -->
+        <div class="preview-container">
+            <button class="download-btn" onclick="downloadImage()" id="downloadBtn" disabled>下载图片</button>
+
+            <div class="phone-mockup" id="phone-content">
+                <!-- 状态栏 -->
+                <div class="status-bar">
+                    <div class="status-left">
+                        <span id="currentTime">19:15</span>
+                    </div>
+                    <div class="status-right">
+                        <div class="signal-bars">
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                        </div>
+                        <span>5G</span>
+                        <div class="battery">40%</div>
+                    </div>
+                </div>
+
+                <!-- 头部导航 -->
+                <div class="header">
+                    <div class="back-btn">‹</div>
+                    <div class="title">明细详情</div>
+                    <div class="actions">
+                        <div class="search-btn">🔍</div>
+                        <div class="more-btn">⋯</div>
+                    </div>
+                </div>
+
+                <!-- 主要内容 -->
+                <div class="content">
+                    <div class="transaction-type">跨行转出</div>
+                    <div class="amount" id="displayAmount">- ¥5,760.00</div>
+
+                    <div class="details">
+                        <div class="detail-row">
+                            <span class="detail-label">交易账户</span>
+                            <span class="detail-value">建设银行 6217***9033</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-label">交易子账户</span>
+                            <span class="detail-value">活期储蓄</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-label">交易时间</span>
+                            <span class="detail-value" id="displayTime">2025-10-30 14:14:31</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-label">交易地点/附言</span>
+                            <span class="detail-value">跨行转出</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-label">对方账户</span>
+                            <span class="detail-value" id="displayAccount">*勇 6217***2714</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-label">记账日</span>
+                            <span class="detail-value" id="displayDate">2025-10-30</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-label">账户余额</span>
+                            <span class="detail-value" id="displayBalance">¥18,767.71</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 底部指示器 -->
+                <div class="home-indicator"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入html2canvas库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        // 设置当前时间
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.getHours().toString().padStart(2, '0') + ':' +
+                             now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('currentTime').textContent = timeString;
+        }
+
+        // 格式化金额
+        function formatAmount(amount) {
+            const num = parseFloat(amount);
+            if (isNaN(num)) return '- ¥0.00';
+            return '- ¥' + num.toLocaleString('zh-CN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        // 格式化余额
+        function formatBalance(balance) {
+            const num = parseFloat(balance);
+            if (isNaN(num)) return '¥0.00';
+            return '¥' + num.toLocaleString('zh-CN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        // 格式化日期时间
+        function formatDateTime(dateTimeString) {
+            if (!dateTimeString) return '2025-10-30 14:14:31';
+            const date = new Date(dateTimeString);
+            return date.getFullYear() + '-' +
+                   (date.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                   date.getDate().toString().padStart(2, '0') + ' ' +
+                   date.getHours().toString().padStart(2, '0') + ':' +
+                   date.getMinutes().toString().padStart(2, '0') + ':' +
+                   date.getSeconds().toString().padStart(2, '0');
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '2025-10-30';
+            const date = new Date(dateString);
+            return date.getFullYear() + '-' +
+                   (date.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                   date.getDate().toString().padStart(2, '0');
+        }
+
+        // 生成预览
+        function generatePreview() {
+            const amount = document.getElementById('amount').value;
+            const transactionTime = document.getElementById('transactionTime').value;
+            const targetAccount = document.getElementById('targetAccount').value;
+            const recordDate = document.getElementById('recordDate').value;
+            const balance = document.getElementById('balance').value;
+
+            // 更新显示内容
+            document.getElementById('displayAmount').textContent = formatAmount(amount);
+            document.getElementById('displayTime').textContent = formatDateTime(transactionTime);
+            document.getElementById('displayAccount').textContent = targetAccount || '*勇 6217***2714';
+            document.getElementById('displayDate').textContent = formatDate(recordDate);
+            document.getElementById('displayBalance').textContent = formatBalance(balance);
+
+            // 启用下载按钮
+            document.getElementById('downloadBtn').disabled = false;
+
+            console.log('预览已生成');
+        }
+
+        // 下载图片
+        function downloadImage() {
+            const element = document.getElementById('phone-content');
+
+            const options = {
+                width: 414,
+                height: 896,
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#f5f5f5'
+            };
+
+            html2canvas(element, options).then(function(canvas) {
+                const link = document.createElement('a');
+                link.download = '银行明细详情_' + new Date().getTime() + '.png';
+                link.href = canvas.toDataURL('image/png');
+
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                console.log('图片下载完成');
+            }).catch(function(error) {
+                console.error('生成图片失败:', error);
+                alert('图片生成失败，请重试');
+            });
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            updateCurrentTime();
+            // 每分钟更新一次时间
+            setInterval(updateCurrentTime, 60000);
+
+            // 设置默认的交易时间为当前时间
+            const now = new Date();
+            const dateTimeString = now.getFullYear() + '-' +
+                                 (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                                 now.getDate().toString().padStart(2, '0') + 'T' +
+                                 now.getHours().toString().padStart(2, '0') + ':' +
+                                 now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('transactionTime').value = dateTimeString;
+
+            // 设置默认的记账日为今天
+            const dateString = now.getFullYear() + '-' +
+                             (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                             now.getDate().toString().padStart(2, '0');
+            document.getElementById('recordDate').value = dateString;
+        });
+    </script>
+</body>
+</html>
