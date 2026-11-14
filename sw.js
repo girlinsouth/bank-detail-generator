@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bank-detail-generator-v1';
+const CACHE_NAME = 'bank-detail-generator-v2';
 const urlsToCache = [
   '/',
   '/index.html',

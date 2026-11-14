@@ -323,8 +323,8 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">交易时间</label>
-                <input type="datetime-local" class="form-input" id="transactionTime">
+                <label class="form-label">交易时间（精确到秒）</label>
+                <input type="datetime-local" class="form-input" id="transactionTime" step="1" title="可选择或输入秒，例如 2025-10-30 14:14:31">
             </div>
 
             <div class="form-group">
@@ -536,7 +536,8 @@
                                  (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
                                  now.getDate().toString().padStart(2, '0') + 'T' +
                                  now.getHours().toString().padStart(2, '0') + ':' +
-                                 now.getMinutes().toString().padStart(2, '0');
+                                 now.getMinutes().toString().padStart(2, '0') + ':' +
+                                 now.getSeconds().toString().padStart(2, '0');
             document.getElementById('transactionTime').value = dateTimeString;
         });
     </script>
